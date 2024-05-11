@@ -1,113 +1,239 @@
-import Image from "next/image";
+"use client"
+// types images for filter start 
+import fairyImg from './images/pokTypes/fairy.png';
+import darkImg from './images/pokTypes/dark.png';
+import electricImg from './images/pokTypes/electric.png';
+import fightingImg from './images/pokTypes/fighting.png';
+import groundImg from './images/pokTypes/ground.png';
+import iceImg from './images/pokTypes/ice.png';
+import normalImg from './images/pokTypes/fairy.png';
+import poisonImg from './images/pokTypes/poison.png';
+import psychicImg from './images/pokTypes/psychic.png';
+import rockImg from './images/pokTypes/rock.png';
+import steelImg from './images/pokTypes/steel.png';
+import waterImg from './images/pokTypes/water.png';
+import dragonImg from './images/pokTypes/dragon.svg';
+import ghostImg from './images/pokTypes/ghost.svg';
+import bugImg from './images/pokTypes/bug.svg';
+import fireImg from './images/pokTypes/fire.svg';
+import grassImg from './images/pokTypes/grass.svg';
+// types images for filter end
+
+// ui imports start
+import { PokemonCard } from './components/ui/pokemonCard';
+// ui imports end
+import { useState, useEffect } from 'react';
+import Image from 'next/image';
+import ReactPaginate from 'react-paginate';
+import Autosuggest from 'react-autosuggest';
+
+const pokemonsTypes = [
+  { type: 'fairy', img: fairyImg },
+  { type: 'dark', img: darkImg },
+  { type: 'electric', img: electricImg },
+  { type: 'fighting', img: fightingImg },
+  { type: 'ground', img: groundImg },
+  { type: 'ice', img: iceImg },
+  { type: 'normal', img: normalImg },
+  { type: 'poison', img: poisonImg },
+  { type: 'psychic', img: psychicImg },
+  { type: 'rock', img: rockImg },
+  { type: 'steel', img: steelImg },
+  { type: 'water', img: waterImg },
+  { type: 'dragon', img: dragonImg },
+  { type: 'ghost', img: ghostImg },
+  { type: 'bug', img: bugImg },
+  { type: 'fire', img: fireImg },
+  { type: 'frass', img: grassImg },
+];
 
 export default function Home() {
-  return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 w-full max-w-5xl items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">src/app/page.tsx</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:size-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
-      </div>
+  const [allPokemons, setAllPokemons] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [pokemonsPerPage] = useState(20);
+  const [selectedTypes, setSelectedTypes] = useState(new Set());
+  const [searchValue, setSearchValue] = useState('');
+  const [suggestions, setSuggestions] = useState([]);
 
-      <div className="relative z-[-1] flex place-items-center before:absolute before:h-[300px] before:w-full before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-full after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 sm:before:w-[480px] sm:after:w-[240px] before:lg:h-[360px]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
+  // data fetch start 
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const pokemonData = await Promise.all(
+          Array.from({ length: 50 }, (_, i) =>
+            fetch(`https://pokeapi.co/api/v2/pokemon/${i + 1}/`).then(res => res.json())
+          )
+        );
+        const pokemons = pokemonData.map((res, i) => {
+          const type1 = res.types[0]?.type.name;
+          const type2 = res.types[1]?.type.name;
+          return {
+            id: i + 1,
+            name: res.name,
+            sprite: res.sprites.front_default,
+            type1: type1,
+            type2: type2,
+          };
+        });
+        setAllPokemons(pokemons);
+        setLoading(false);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+  // data fetch end 
+
+  // Pagination logic start
+  const handlePageClick = ({ selected }) => {
+    setCurrentPage(selected);
+  };
+
+  // Filtered pokemons based on selected types and search value
+  const filteredPokemons = allPokemons.filter((pokemon) => {
+    if (selectedTypes.size === 0 && !searchValue) {
+      return true;
+    }
+
+    let typeMatch = false;
+    if (selectedTypes.size === 0) {
+      typeMatch = true;
+    } else {
+      for (const selectedType of selectedTypes) {
+        if (pokemon.type1 === selectedType || pokemon.type2 === selectedType) {
+          typeMatch = true;
+          break;
+        }
+      }
+    }
+
+    const nameMatch = pokemon.name.toLowerCase().includes(searchValue.toLowerCase());
+
+    return typeMatch && (searchValue ? nameMatch : true);
+  });
+
+  const indexOfLastPokemon = (currentPage + 1) * pokemonsPerPage;
+  const indexOfFirstPokemon = indexOfLastPokemon - pokemonsPerPage;
+  const currentPokemons = filteredPokemons.slice(indexOfFirstPokemon, indexOfLastPokemon);
+  // Pagination logic end
+
+  // Toggle type selection
+  const toggleTypeSelection = (type) => {
+    setSelectedTypes((prevSelectedTypes) => {
+      const newSelectedTypes = new Set(prevSelectedTypes);
+      if (newSelectedTypes.has(type)) {
+        newSelectedTypes.delete(type);
+      } else {
+        newSelectedTypes.add(type);
+      }
+      return newSelectedTypes;
+    });
+  };
+
+  const getSuggestions = (value) => {
+    const inputValue = value.trim().toLowerCase();
+    const inputLength = inputValue.length;
+
+    return inputLength === 0 ? [] : allPokemons.map(pokemon => pokemon.name).filter(name =>
+      name.toLowerCase().slice(0, inputLength) === inputValue
+    );
+  };
+
+  const onSuggestionsFetchRequested = ({ value }) => {
+    setSuggestions(getSuggestions(value));
+  };
+
+  const onSuggestionsClearRequested = () => {
+    setSuggestions([]);
+  };
+
+  const onSuggestionSelected = (event, { suggestion }) => {
+    setSearchValue(suggestion);
+  };
+
+  const inputProps = {
+    placeholder: 'Search Pokemon',
+    value: searchValue,
+    onChange: (event, { newValue }) => {
+      setSearchValue(newValue);
+    },
+    onBlur: () => {
+      setSuggestions([]);
+    }
+  };
+  const handleSuggestionClick = (suggestion) => {
+    setSearchValue(suggestion);
+  };
+
+  return (
+    <div className="bg-white p-5 rounded-xl max-w-5xl w-full h-full mx-4 flex flex-col ">
+      {/* Filter start */}
+      <div className=' flex flex-col gap-4'>
+        {/* Types start */}
+        <div className=' flex flex-wrap gap-2'>
+          {pokemonsTypes.map((item, index) => (
+            <div key={index} className='flex gap-2 items-center border border-green p-1 rounded-xl hover:cursor-pointer'  
+            onClick={() => toggleTypeSelection(item.type)}
+            >
+              <input type="checkbox" checked={selectedTypes.has(item.type)}/>
+              <h3 className='font-bold'>{item.type}</h3>
+              <Image src={item.img} alt='Fairy' width={24} height={24} />
+            </div>
+          ))}
+          <div className='flex gap-2 items-center border border-dark-green p-1 rounded-xl'>
+            <p className=' hover:cursor-pointer text-red-600' onClick={() => setSelectedTypes(new Set())}>Reset</p>
+          </div>
+        </div>
+        {/* Types end */}
+
+        {/* Search start */}
+        <div className=' flex flex-col gap-2'>
+          <Autosuggest
+            suggestions={suggestions}
+            onSuggestionsFetchRequested={onSuggestionsFetchRequested}
+            onSuggestionsClearRequested={onSuggestionsClearRequested}
+            onSuggestionSelected={onSuggestionSelected}
+            getSuggestionValue={(suggestion) => suggestion}
+            renderSuggestion={(suggestion) => <div className=' hover:cursor-pointer'>{suggestion}</div>}
+            inputProps={inputProps}
+          />
+          {/* Suggestions list */}
+        </div>
+        {/* Search end */}
+      </div>
+      {/* Filter end */}
+      <span className="border border-green w-full block my-5"></span>
+      {/* Items list start  */}
+      <div className=' flex flex-wrap gap-3 justify-center max-w-4xl self-center'>
+        {!loading ?
+        (currentPokemons.map((item) => {
+          return (
+        <PokemonCard item={item} key={item.id}/>
+        )
+      }))
+      : (<div className=' mt-20 font-bold text-2xl'>is Loading</div>)
+}
+      </div>
+      {/* Items list end  */}
+      {/* Pagination */}
+      <div className="flex justify-center mt-4">
+        <ReactPaginate
+          previousLabel={'Previous'}
+          nextLabel={'Next'}
+          breakLabel={'...'}
+          breakClassName={'break-me'}
+          pageCount={Math.ceil(filteredPokemons.length / pokemonsPerPage)}
+          marginPagesDisplayed={2}
+          pageRangeDisplayed={5}
+          onPageChange={handlePageClick}
+          containerClassName=' flex gap-4 mt-5'
+          pageClassName=' px-2'
+          activeClassName=" rounded-xl bg-black text-white px-2"
         />
       </div>
-
-      <div className="mb-32 grid text-center lg:mb-0 lg:w-full lg:max-w-5xl lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Docs{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Learn{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Templates{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Explore starter templates for Next.js.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Deploy{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-balance text-sm opacity-50">
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
+    </div>
   );
 }
