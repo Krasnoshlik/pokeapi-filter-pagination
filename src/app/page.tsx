@@ -44,7 +44,7 @@ const pokemonsTypes = [
   { type: 'ghost', img: ghostImg },
   { type: 'bug', img: bugImg },
   { type: 'fire', img: fireImg },
-  { type: 'frass', img: grassImg },
+  { type: 'grass', img: grassImg },
 ];
 
 export default function Home() {
@@ -219,6 +219,7 @@ export default function Home() {
       </div>
       {/* Items list end  */}
       {/* Pagination */}
+      {filteredPokemons.length === 0 ? <div className=' font-bold text-xl self-center'>Pokemons not found</div> :
       <div className="flex justify-center mt-4">
         <ReactPaginate
           previousLabel={'Previous'}
@@ -233,7 +234,7 @@ export default function Home() {
           pageClassName=' px-2'
           activeClassName=" rounded-xl bg-black text-white px-2"
         />
-      </div>
+      </div>}
     </div>
   );
 }
