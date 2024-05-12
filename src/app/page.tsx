@@ -27,7 +27,7 @@ import Image from 'next/image';
 import ReactPaginate from 'react-paginate';
 import Autosuggest from 'react-autosuggest';
 
-const pokemonsTypes = [
+const pokemonsTypes: PokemonType[] = [
   { type: 'fairy', img: fairyImg },
   { type: 'dark', img: darkImg },
   { type: 'electric', img: electricImg },
@@ -47,16 +47,29 @@ const pokemonsTypes = [
   { type: 'grass', img: grassImg },
 ];
 
+interface PokemonType {
+  type: string;
+  img: string;
+}
+
+interface PokemonInfo {
+  id: number;
+  name: string;
+  sprite: string;
+  type1: string;
+  type2: string;
+}
+
 export default function Home() {
-  const [allPokemons, setAllPokemons] = useState([]);
+  const [allPokemons, setAllPokemons] = useState<PokemonInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(0);
   const [pokemonsPerPage] = useState(21);
-  const [selectedTypes, setSelectedTypes] = useState(new Set());
+  const [selectedTypes, setSelectedTypes] = useState<Set<string>>(new Set<string>());
   const [searchValue, setSearchValue] = useState('');
-  const [suggestions, setSuggestions] = useState([]);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
 
-  // data fetch start 
+  // data fetch start
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -65,20 +78,20 @@ export default function Home() {
             fetch(`https://pokeapi.co/api/v2/pokemon/${i + 1}/`).then(res => res.json())
           )
         );
-        const pokemons = pokemonData.map((res, i) => {
+        const pokemons: PokemonInfo[] = pokemonData.map((res, i) => {
           const type1 = res.types[0]?.type.name;
           const type2 = res.types[1]?.type.name;
           return {
             id: i + 1,
             name: res.name,
             sprite: res.sprites.front_default,
-            type1: type1,
-            type2: type2,
+            type1: type1 || '',
+            type2: type2 || '',
           };
         });
         setAllPokemons(pokemons);
         setLoading(false);
-        console.log(pokemons)
+        console.log(pokemons);
       } catch (error) {
         console.error("Error fetching data:", error);
         setLoading(false);
@@ -86,10 +99,9 @@ export default function Home() {
     };
     fetchData();
   }, []);
-  // data fetch end 
 
   // Pagination logic start
-  const handlePageClick = ({ selected }) => {
+  const handlePageClick = ({ selected }: { selected: number }) => {
     setCurrentPage(selected);
   };
 
@@ -122,7 +134,7 @@ export default function Home() {
   // Pagination logic end
 
   // Toggle type selection
-  const toggleTypeSelection = (type) => {
+  const toggleTypeSelection = (type: string) => {
     setSelectedTypes((prevSelectedTypes) => {
       const newSelectedTypes = new Set(prevSelectedTypes);
       if (newSelectedTypes.has(type)) {
@@ -134,7 +146,7 @@ export default function Home() {
     });
   };
 
-  const getSuggestions = (value) => {
+  const getSuggestions = (value: string) => {
     const inputValue = value.trim().toLowerCase();
     const inputLength = inputValue.length;
 
@@ -143,7 +155,7 @@ export default function Home() {
     );
   };
 
-  const onSuggestionsFetchRequested = ({ value }) => {
+  const onSuggestionsFetchRequested = ({ value }: { value: string }) => {
     setSuggestions(getSuggestions(value));
   };
 
@@ -151,14 +163,14 @@ export default function Home() {
     setSuggestions([]);
   };
 
-  const onSuggestionSelected = (event, { suggestion }) => {
+  const onSuggestionSelected = (event: React.FormEvent, { suggestion }: { suggestion: string }) => {
     setSearchValue(suggestion);
   };
 
   const inputProps = {
     placeholder: 'Search Pokemon',
     value: searchValue,
-    onChange: (event, { newValue }) => {
+    onChange: (_: React.FormEvent, { newValue }: { newValue: string }) => {
       setSearchValue(newValue);
     },
     onBlur: () => {
@@ -166,10 +178,10 @@ export default function Home() {
     }
   };
 
-  function resetSearch() {
+  const resetSearch = () => {
     setSearchValue('');
     setSuggestions([]);
-  }
+  };
 
   return (
     <div className="bg-white p-5 rounded-xl max-w-5xl w-full min-h-screen mx-4 flex flex-col ">
@@ -178,10 +190,10 @@ export default function Home() {
         {/* Types start */}
         <div className=' flex flex-wrap gap-2'>
           {pokemonsTypes.map((item, index) => (
-            <div key={index} className='flex gap-2 items-center border border-green p-1 rounded-xl hover:cursor-pointer'  
-            onClick={() => toggleTypeSelection(item.type)}
+            <div key={index} className='flex gap-2 items-center border border-green p-1 rounded-xl hover:cursor-pointer'
+              onClick={() => toggleTypeSelection(item.type)}
             >
-              <input type="checkbox" checked={selectedTypes.has(item.type)}/>
+              <input type="checkbox" checked={selectedTypes.has(item.type)} />
               <h3 className='font-bold'>{item.type}</h3>
               <Image src={item.img} alt='Fairy' width={24} height={24} />
             </div>
@@ -212,33 +224,34 @@ export default function Home() {
       <span className="border border-green w-full block my-5"></span>
       {/* Items list start  */}
       <div className=' flex flex-wrap gap-3 justify-center max-w-4xl self-center'>
-        {!loading ?
-        (currentPokemons.map((item) => {
-          return (
-        <PokemonCard item={item} key={item.id}/>
-        )
-      }))
-      : (<div className=' mt-20 font-bold text-2xl -mb-10 w-72 h-24 bg-white z-10 text-center'>is Loading</div>)
-}
+        {!loading ? (
+          currentPokemons.map((item) => {
+            return (
+              <PokemonCard item={item} key={item.id} />
+            );
+          })
+        ) : (
+          <div className=' mt-20 font-bold text-2xl -mb-10 w-72 h-24 bg-white z-10 text-center'>is Loading</div>
+        )}
       </div>
       {/* Items list end  */}
       {/* Pagination */}
       {filteredPokemons.length === 0 ? <div className=' font-bold text-xl self-center'>Pokemons not found</div> :
-      <div className="flex justify-center mt-4">
-        <ReactPaginate
-          previousLabel={'Previous'}
-          nextLabel={'Next'}
-          breakLabel={'...'}
-          breakClassName={'break-me'}
-          pageCount={Math.ceil(filteredPokemons.length / pokemonsPerPage)}
-          marginPagesDisplayed={2}
-          pageRangeDisplayed={5}
-          onPageChange={handlePageClick}
-          containerClassName=' flex gap-4 mt-5'
-          pageClassName=' px-2'
-          activeClassName=" rounded-xl bg-black text-white px-2"
-        />
-      </div>}
+        <div className="flex justify-center mt-4">
+          <ReactPaginate
+            previousLabel={'Previous'}
+            nextLabel={'Next'}
+            breakLabel={'...'}
+            breakClassName={'break-me'}
+            pageCount={Math.ceil(filteredPokemons.length / pokemonsPerPage)}
+            marginPagesDisplayed={2}
+            pageRangeDisplayed={5}
+            onPageChange={handlePageClick}
+            containerClassName=' flex gap-4 mt-5'
+            pageClassName=' px-2'
+            activeClassName=" rounded-xl bg-black text-white px-2"
+          />
+        </div>}
     </div>
   );
 }

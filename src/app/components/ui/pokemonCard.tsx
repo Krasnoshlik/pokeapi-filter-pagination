@@ -1,6 +1,21 @@
 import Link from "next/link";
 
-export const PokemonCard = ({ item }) => {
+interface PokemonInfo {
+  id: number;
+  name: string;
+  sprite: string;
+  exp: number;
+  height: number;
+  weight: number;
+  type1: string;
+  type2: string;
+}
+
+interface PokemonCardProps {
+  item: PokemonInfo;
+}
+
+export const PokemonCard = ({ item }: PokemonCardProps) => {
   return (
     <div className=" border-2 border-green p-2">
       <div className=" flex flex-col items-center">
