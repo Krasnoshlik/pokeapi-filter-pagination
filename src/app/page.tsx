@@ -51,7 +51,7 @@ export default function Home() {
   const [allPokemons, setAllPokemons] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(0);
-  const [pokemonsPerPage] = useState(20);
+  const [pokemonsPerPage] = useState(21);
   const [selectedTypes, setSelectedTypes] = useState(new Set());
   const [searchValue, setSearchValue] = useState('');
   const [suggestions, setSuggestions] = useState([]);
@@ -61,7 +61,7 @@ export default function Home() {
     const fetchData = async () => {
       try {
         const pokemonData = await Promise.all(
-          Array.from({ length: 50 }, (_, i) =>
+          Array.from({ length: 100 }, (_, i) =>
             fetch(`https://pokeapi.co/api/v2/pokemon/${i + 1}/`).then(res => res.json())
           )
         );
@@ -78,6 +78,7 @@ export default function Home() {
         });
         setAllPokemons(pokemons);
         setLoading(false);
+        console.log(pokemons)
       } catch (error) {
         console.error("Error fetching data:", error);
         setLoading(false);
@@ -164,12 +165,14 @@ export default function Home() {
       setSuggestions([]);
     }
   };
-  const handleSuggestionClick = (suggestion) => {
-    setSearchValue(suggestion);
-  };
+
+  function resetSearch() {
+    setSearchValue('');
+    setSuggestions([]);
+  }
 
   return (
-    <div className="bg-white p-5 rounded-xl max-w-5xl w-full h-full mx-4 flex flex-col ">
+    <div className="bg-white p-5 rounded-xl max-w-5xl w-full min-h-screen mx-4 flex flex-col ">
       {/* Filter start */}
       <div className=' flex flex-col gap-4'>
         {/* Types start */}
@@ -197,9 +200,10 @@ export default function Home() {
             onSuggestionsClearRequested={onSuggestionsClearRequested}
             onSuggestionSelected={onSuggestionSelected}
             getSuggestionValue={(suggestion) => suggestion}
-            renderSuggestion={(suggestion) => <div className=' hover:cursor-pointer'>{suggestion}</div>}
+            renderSuggestion={(suggestion) => <div className='suggestion-item hover:cursor-pointer '>{suggestion}</div>}
             inputProps={inputProps}
           />
+          <button className=' self-start text-red-500' onClick={resetSearch}>Reset search</button>
           {/* Suggestions list */}
         </div>
         {/* Search end */}
@@ -214,7 +218,7 @@ export default function Home() {
         <PokemonCard item={item} key={item.id}/>
         )
       }))
-      : (<div className=' mt-20 font-bold text-2xl'>is Loading</div>)
+      : (<div className=' mt-20 font-bold text-2xl -mb-10 w-72 h-24 bg-white z-10 text-center'>is Loading</div>)
 }
       </div>
       {/* Items list end  */}

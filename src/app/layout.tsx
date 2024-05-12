@@ -17,7 +17,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-      <div className="  bg-[url('./images/pokyland.jpg')] bg-cover h-screen flex items-center justify-center py-10">
+      <div className="  bg-[url('./images/pokyland.jpg')] bg-cover h-full flex items-center justify-center py-5">
         {children}
       </div>
       </body>
