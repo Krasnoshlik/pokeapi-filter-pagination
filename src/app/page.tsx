@@ -64,7 +64,7 @@ export default function Home() {
   const [allPokemons, setAllPokemons] = useState<PokemonInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(0);
-  const [pokemonsPerPage] = useState(21);
+  const [pokemonsPerPage] = useState(50);
   const [selectedTypes, setSelectedTypes] = useState<Set<string>>(new Set<string>());
   const [searchValue, setSearchValue] = useState('');
   const [suggestions, setSuggestions] = useState<string[]>([]);
@@ -74,7 +74,7 @@ export default function Home() {
     const fetchData = async () => {
       try {
         const pokemonData = await Promise.all(
-          Array.from({ length: 100 }, (_, i) =>
+          Array.from({ length: 200 }, (_, i) =>
             fetch(`https://pokeapi.co/api/v2/pokemon/${i + 1}/`).then(res => res.json())
           )
         );
@@ -128,6 +128,7 @@ export default function Home() {
     return typeMatch && (searchValue ? nameMatch : true);
   });
 
+  // Pagination logic start
   const indexOfLastPokemon = (currentPage + 1) * pokemonsPerPage;
   const indexOfFirstPokemon = indexOfLastPokemon - pokemonsPerPage;
   const currentPokemons = filteredPokemons.slice(indexOfFirstPokemon, indexOfLastPokemon);
@@ -150,7 +151,7 @@ export default function Home() {
     const inputValue = value.trim().toLowerCase();
     const inputLength = inputValue.length;
 
-    return inputLength === 0 ? [] : allPokemons.map(pokemon => pokemon.name).filter(name =>
+    return inputLength === 0 ? [] : filteredPokemons.map(pokemon => pokemon.name).filter(name =>
       name.toLowerCase().slice(0, inputLength) === inputValue
     );
   };
@@ -182,6 +183,10 @@ export default function Home() {
     setSearchValue('');
     setSuggestions([]);
   };
+
+  useEffect(() => {
+    setCurrentPage(0);
+  }, [selectedTypes]);
 
   return (
     <div className="bg-white p-5 rounded-xl max-w-5xl w-full min-h-screen mx-4 flex flex-col ">
