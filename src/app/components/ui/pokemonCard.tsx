@@ -1,19 +1,17 @@
 import Link from "next/link";
 
-interface PokemonInfo {
+interface PokemonsInfo {
   id: number;
   name: string;
   sprite: string;
-  exp: number;
-  height: number;
-  weight: number;
   type1: string;
   type2: string;
 }
 
 interface PokemonCardProps {
-  item: PokemonInfo;
+  item: PokemonsInfo;
 }
+
 
 export const PokemonCard = ({ item }: PokemonCardProps) => {
   return (
